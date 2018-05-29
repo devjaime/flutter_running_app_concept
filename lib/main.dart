@@ -23,56 +23,100 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> with TickerProviderStateMixin {
-  double _percentageVisible = 0.0;
 
-  Animation<double> _animation;
-  AnimationController _controller;
+  static final double endContentAnim = 0.725;
+  static final double endLogoAnim = 1.0;
+  static final double iniAnim = 0.0;
+
+  Animation<double> _contentAnimation;
+  Animation<double> _logoAnimation;
+  AnimationController _contentController;
+  AnimationController _logoController;
 
   @override
   void initState() {
     super.initState();
-    _controller = new AnimationController(
+    _contentController = new AnimationController(
         duration: new Duration(milliseconds: 1500), vsync: this);
-    final CurvedAnimation curve =
-        new CurvedAnimation(parent: _controller, curve: Curves.fastOutSlowIn);
-    _animation = new Tween<double>(begin: 0.0, end: 1.0).animate(curve)
+    _logoController = new AnimationController(
+        duration: new Duration(milliseconds: 1500), vsync: this);
+
+    final CurvedAnimation contentCurve = new CurvedAnimation(
+        parent: _contentController, curve: Curves.fastOutSlowIn);
+    final CurvedAnimation logoCurve = new CurvedAnimation(
+        parent: _logoController, curve: Curves.fastOutSlowIn);
+
+    _contentAnimation =
+        new Tween<double>(begin: iniAnim, end: endContentAnim).animate(contentCurve)
+          ..addListener(() {
+            setState(() {
+              // Required to notify the animation changes
+            });
+          });
+
+    _logoAnimation = new Tween<double>(begin: iniAnim, end: endLogoAnim).animate(logoCurve)
       ..addListener(() {
         setState(() {
-          _percentageVisible = ui.lerpDouble(0.0, 1.0, _animation.value);
+          // Required to notify the animation changes
         });
       })
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          _controller.forward(from: 0.0);
+          _contentController.forward();
         }
       });
-    _controller.forward();
+
+    _logoController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _logoController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-    return new Scaffold(
-      body: new Container(
-        color: baseBlack,
-        height: double.infinity,
-        width: double.infinity,
-        child: new Transform(
-          transform: new Matrix4.translationValues(
-              0.0, size.height * (1.0 - _percentageVisible), 0.0),
-          child: new Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              new BarsLogo(),
-              new NameLogo(),
-            ],
+    final MediaQueryData data = MediaQuery.of(context);
+    final Size screenSize = data.size;
+    final EdgeInsets edges = data.padding;
+    return new Container(
+      color: baseBlack,
+      child: new Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: new AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0.0,
+          leading: new Icon(Icons.account_circle),
+          title: new Text('This week'),
+          actions: <Widget>[new Icon(Icons.sort)],
+        ),
+        body: new Container(
+          height: double.infinity,
+          width: double.infinity,
+          child: new Transform(
+            transform: new Matrix4.translationValues(
+                0.0,
+                screenSize.height *
+                        (1.0 - ui.lerpDouble(iniAnim, endLogoAnim, _logoAnimation.value)) -
+                    edges.top,
+                0.0),
+            child: new Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                new Transform(
+                  transform: new Matrix4.translationValues(
+                      0.0, -screenSize.height * ui.lerpDouble(iniAnim, endContentAnim, _contentAnimation.value), 0.0),
+                  child: new BarsLogo(),
+                ),
+                new Transform(
+                  transform: new Matrix4.translationValues(
+                      0.0, screenSize.height * ui.lerpDouble(iniAnim, endContentAnim, _contentAnimation.value), 0.0),
+                  child: new NameLogo(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
