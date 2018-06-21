@@ -1,8 +1,5 @@
-import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
-import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 
 final Color baseBlack = Color(0xFF383838);
@@ -25,33 +22,6 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> with TickerProviderStateMixin {
-  static final double maxExplosionAnim = 0.725;
-  static final double maxBottomUpAnim = 1.0;
-  static final double minAnim = 0.0;
-
-  AnimationController _bottomUpAnimController;
-  Animation<double> _bottomUpAnimation;
-
-  Animation<double> _explosionAnimation;
-  AnimationController _explosionController;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _setUpBottomUpAnimation();
-    _setUpExplosionAnimation();
-
-    _bottomUpAnimController.forward();
-  }
-
-  @override
-  void dispose() {
-    _explosionController.dispose();
-    _bottomUpAnimController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final MediaQueryData data = MediaQuery.of(context);
@@ -61,111 +31,247 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
       color: baseBlack,
       child: new Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: new AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0.0,
-          leading: new Icon(Icons.account_circle),
-          title: new Text('This week'),
-          actions: <Widget>[new Icon(Icons.sort)],
-        ),
-        body: new Container(
-          height: double.infinity,
-          width: double.infinity,
-          child: new Transform(
-            transform: _fullLogoTranslation(screenSize, systemPadding),
-            child: new Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+        body: new Stack(
+          children: <Widget>[
+            new FullLogoAnimation(),
+            new Column(
               children: <Widget>[
-                new Transform(
-                  transform: new Matrix4.translationValues(
-                      0.0,
-                      -screenSize.height *
-                          ui.lerpDouble(minAnim, maxExplosionAnim,
-                              _explosionAnimation.value),
-                      0.0),
-                  child: new BarsLogo(),
+                new CustomAppBar(
+                  paddingTop: systemPadding.top,
                 ),
-                new Transform(
-                  transform: new Matrix4.translationValues(
-                      0.0,
-                      screenSize.height *
-                          ui.lerpDouble(minAnim, maxExplosionAnim,
-                              _explosionAnimation.value),
-                      0.0),
-                  child: new NameLogo(),
+                new Expanded(
+                  child: new Container(
+                    padding: const EdgeInsets.only(
+                        left: 32.0,
+                        top: 10.0,
+                        right: 32.0,
+                        bottom: 15.0,
+                    ),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        topLeft: new Radius.circular(10.0),
+                        topRight: new Radius.circular(10.0),
+                      ),
+                      color: new Color(0xFFF5F5F5),
+                    ),
+                    child: new Column(
+                      children: <Widget>[
+                        new Flexible(
+                          flex: 2,
+                          child: new Container(
+                            height: double.infinity,
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(35.0),
+                            decoration: new BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: new Container(
+                              padding: const EdgeInsets.all(40.0),
+                              decoration: new BoxDecoration(
+                                border: new Border.all(
+                                  color: new Color(0xFF9B9B9B),
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: new Container(
+                                decoration: new BoxDecoration(
+                                  color: new Color(0xFFF5F5F5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: new Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    new Text(
+                                      'Steps this week',
+                                      style: new TextStyle(
+                                        color: new Color(0xFF052C29),
+                                        fontFamily: 'AvenirLTStd',
+                                        fontSize: 12.0,
+                                      ),
+                                    ),
+                                    new Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                      child: new Text(
+                                        '80 456',
+                                        style: new TextStyle(
+                                          color: new Color(0xFF4A4A4A),
+                                          fontFamily: 'AvenirLTStd',
+                                          fontSize: 24.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    new Text(
+                                      'steps',
+                                      style: new TextStyle(
+                                        color: new Color(0xFF052C29),
+                                        fontFamily: 'AvenirLTStd',
+                                        fontSize: 12.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        new Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10.0, vertical: 30.0),
+                          child: new Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              _createValuesColumn(
+                                  'Total Distance', '78,45', 'kilometers'),
+                              _createValuesColumn('Total Runs', '3', 'runs'),
+                              _createValuesColumn(
+                                  'Total Time', '712,30', 'minuts'),
+                            ],
+                          ),
+                        ),
+                        new Flexible(
+                          child: new Container(
+                            decoration: new BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: new BorderRadius.circular(10.0),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Matrix4 _fullLogoTranslation(Size screenSize, EdgeInsets systemPadding) {
-    return new Matrix4.translationValues(
-        0.0,
-        screenSize.height *
-            (1.0 -
-                ui.lerpDouble(minAnim, maxBottomUpAnim,
-                    _bottomUpAnimation.value)) -
-            systemPadding.top,
-        0.0);
-  }
-
-  void _setUpBottomUpAnimation() {
-    _bottomUpAnimController = new AnimationController(
-        duration: new Duration(milliseconds: 1500), vsync: this);
-
-    final CurvedAnimation bottomUpCurve = new CurvedAnimation(
-        parent: _bottomUpAnimController, curve: Curves.fastOutSlowIn);
-
-    _bottomUpAnimation = new Tween<double>(begin: minAnim, end: maxBottomUpAnim)
-        .animate(bottomUpCurve)
-      ..addListener(() {
-        setState(() {
-          // Required to notify the animation changes
-        });
-      })
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          Future.delayed(new Duration(seconds: 2), () {
-            _explosionController.forward();
-          });
-        }
-      });
-  }
-
-  void _setUpExplosionAnimation() {
-    _explosionController = new AnimationController(
-        duration: new Duration(milliseconds: 500), vsync: this);
-
-    final CurvedAnimation contentCurve = new CurvedAnimation(
-        parent: _explosionController, curve: Curves.fastOutSlowIn);
-
-    _explosionAnimation =
-    new Tween<double>(begin: minAnim, end: maxExplosionAnim)
-        .animate(contentCurve)
-      ..addListener(() {
-        setState(() {
-          // Required to notify the animation changes
-        });
-      });
+  Widget _createValuesColumn(String title, String value, String subtitle) {
+    return new Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        new Text(
+          title,
+          style: new TextStyle(
+            color: new Color(0xFF052C29),
+            fontFamily: 'AvenirLTStd',
+            fontSize: 12.0,
+          ),
+        ),
+        new Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: new Text(
+            value,
+            style: new TextStyle(
+              color: new Color(0xFF4A4A4A),
+              fontFamily: 'AvenirLTStd',
+              fontSize: 24.0,
+            ),
+          ),
+        ),
+        new Text(
+          subtitle,
+          style: new TextStyle(
+            color: new Color(0xFF052C29),
+            fontFamily: 'AvenirLTStd',
+            fontSize: 12.0,
+          ),
+        ),
+      ],
+    );
   }
 }
 
-class Bar extends StatelessWidget {
-  Bar({this.color});
+class CustomAppBar extends StatelessWidget {
+  static const double rightBarsHeight = 3.0;
+  static const double rightBarsSpace = 8.0;
+  final double paddingTop;
 
-  final Color color;
+  CustomAppBar({this.paddingTop});
 
   @override
   Widget build(BuildContext context) {
     return new Container(
-      color: this.color,
-      height: 126.0,
-      width: 14.0,
+      height: kToolbarHeight,
+      margin: EdgeInsets.only(
+        bottom: paddingTop,
+        top: paddingTop + 10.0,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: new Row(
+        children: <Widget>[
+          new CircleAvatar(
+            backgroundColor: new Color(0xFFD8D8D8),
+            child: new Icon(Icons.group),
+          ),
+          new Expanded(
+            child: new Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: new Text(
+                'This week',
+                style: new TextStyle(
+                  color: new Color(0xFFABABAB),
+                  fontFamily: 'AvenirLTStd',
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          new Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _createSortBar(30.0),
+              _createSortBarDivision(),
+              _createSortBar(24.0),
+              _createSortBarDivision(),
+              _createSortBar(18.0),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _createSortBar(double width) {
+    return new Container(
+      height: 3.0,
+      width: width,
+      decoration: new BoxDecoration(
+        borderRadius: new BorderRadius.circular(10.0),
+        color: new Color(0xFF7D7D7D),
+        shape: BoxShape.rectangle,
+      ),
+    );
+  }
+
+  Widget _createSortBarDivision() {
+    return new Container(
+      height: 5.0,
+    );
+  }
+}
+
+class FullLogoAnimation extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+      height: double.infinity,
+      width: double.infinity,
+      child: new Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          new BarsLogo(),
+          new NameLogo(),
+        ],
+      ),
     );
   }
 }
@@ -212,6 +318,21 @@ class NameLogo extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+}
+
+class Bar extends StatelessWidget {
+  Bar({this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+      color: this.color,
+      height: 126.0,
+      width: 14.0,
     );
   }
 }
